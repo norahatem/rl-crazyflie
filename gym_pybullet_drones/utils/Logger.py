@@ -39,7 +39,7 @@ class Logger(object):
 
         """
         self.COLAB = colab
-        self.OUTPUT_FOLDER = output_folder
+        self.OUTPUT_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), output_folder)
         if not os.path.exists(self.OUTPUT_FOLDER):
             os.mkdir(self.OUTPUT_FOLDER)
         self.LOGGING_FREQ_HZ = logging_freq_hz
@@ -377,3 +377,32 @@ class Logger(object):
             plt.savefig(os.path.join('results', 'output_figure.png'))
         else:
             plt.show()
+    def export_positions_csv(self, filename: str = "positions.csv"):
+        """
+        Export the x, y, z positions of each drone to a single CSV file.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the CSV file to save in the output folder.
+        """
+        import csv
+
+        file_path = os.path.join(self.OUTPUT_FOLDER, filename)
+        with open(file_path, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            # Write header
+            header = ['timestamp', 'drone_id', 'x', 'y', 'z']
+            writer.writerow(header)
+            
+            for drone_id in range(self.NUM_DRONES):
+                count = int(self.counters[drone_id])
+                for i in range(count):
+                    writer.writerow([
+                        self.timestamps[drone_id, i],
+                        drone_id,
+                        self.states[drone_id, 0, i],  # x
+                        self.states[drone_id, 1, i],  # y
+                        self.states[drone_id, 2, i]   # z
+                    ])
+        print(f"[INFO] Exported positions to {file_path}")
