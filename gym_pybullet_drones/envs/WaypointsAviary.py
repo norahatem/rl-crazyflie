@@ -14,7 +14,7 @@ class WayPointsAviary(BaseRLAviary):
                  initial_xyzs=np.array([[1,1,1]]),
                  initial_rpys=None,
                  use_yaw_targets: bool = False,
-                 goal_reach_distance: float = 0.1,
+                 goal_reach_distance: float = 0.05,
                  goal_reach_angle: float = 0.1,
                  num_targets: int = 4,
                  flight_dome_size: float = 3.0,
@@ -191,8 +191,8 @@ class WayPointsAviary(BaseRLAviary):
     def _computeObs(self):
         if self.OBS_TYPE == ObservationType.KIN:
             ############################################################
-            #### OBS SPACE OF SIZE 13?
-            obs_13 = np.zeros((self.NUM_DRONES,15))
+            #### OBS SPACE OF SIZE 15?
+            obs_15 = np.zeros((self.NUM_DRONES,15))
             for i in range(self.NUM_DRONES):
                 #obs = self._clipAndNormalizeState(self._getDroneStateVector(i))
                 obs = self._getDroneStateVector(i)
@@ -205,8 +205,8 @@ class WayPointsAviary(BaseRLAviary):
                     quaternion=drone_quat
                 )
                 target_delta = target_deltas[0] if len(target_deltas) > 0 else np.zeros(3)
-                obs_13[i, :] = np.hstack([obs[0:3], obs[7:10], obs[10:13], obs[13:16], target_delta]).reshape(15,)
-            ret = np.array([obs_13[i, :] for i in range(self.NUM_DRONES)]).astype('float32')
+                obs_15[i, :] = np.hstack([drone_pos, drone_ang, obs[10:13], obs[13:16], target_delta]).reshape(15,)
+            ret = np.array([obs_15[i, :] for i in range(self.NUM_DRONES)]).astype('float32')
             #### Add action buffer to observation #######################
             for i in range(self.ACTION_BUFFER_SIZE):
                 ret = np.hstack([ret, np.array([self.action_buffer[i][j, :] for j in range(self.NUM_DRONES)])])
@@ -221,7 +221,7 @@ class WayPointsAviary(BaseRLAviary):
             ret = -100
             
         current_target = self.waypoints.current_target
-        print(f"comp reward, current target is: {current_target}")
+        # print(f"comp reward, current target is: {current_target}")
         if current_target is not None:
             target_z = current_target[2]
             #penalise crashes, might want to do it a bit better!
@@ -268,7 +268,7 @@ class WayPointsAviary(BaseRLAviary):
         state = self._getDroneStateVector(0)
         #if we crash terminate
         current_target = self.waypoints.current_target
-        print(f"comp term, current target is: {current_target}")
+        # print(f"comp term, current target is: {current_target}")
         if current_target is not None:
             target_z = current_target[2]
             if (target_z > 0.1 and state[2] < 0.01) or (target_z > 0.0 and state[2] < 0.0005):

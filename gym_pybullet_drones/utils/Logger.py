@@ -48,7 +48,7 @@ class Logger(object):
         self.counters = np.zeros(num_drones)
         self.timestamps = np.zeros((num_drones, duration_sec*self.LOGGING_FREQ_HZ))
         #### Note: this is the suggest information to log ##############################
-        self.states = np.zeros((num_drones, 16, duration_sec*self.LOGGING_FREQ_HZ)) #### 16 states: pos_x,
+        self.states = np.zeros((num_drones, 19, duration_sec*self.LOGGING_FREQ_HZ)) #### 16 states: pos_x,
                                                                                                   # pos_y,
                                                                                                   # pos_z,
                                                                                                   # vel_x,
@@ -65,7 +65,7 @@ class Logger(object):
                                                                                                   # rpm2,
                                                                                                   # rpm3
         #### Note: this is the suggest information to log ##############################
-        self.controls = np.zeros((num_drones, 12, duration_sec*self.LOGGING_FREQ_HZ)) #### 12 control targets: pos_x,
+        self.controls = np.zeros((num_drones, 15, duration_sec*self.LOGGING_FREQ_HZ)) #### 12 control targets: pos_x,
                                                                                                              # pos_y,
                                                                                                              # pos_z,
                                                                                                              # vel_x, 
@@ -84,7 +84,7 @@ class Logger(object):
             drone: int,
             timestamp,
             state,
-            control=np.zeros(12)
+            control=np.zeros(15)
             ):
         """Logs entries for a single simulation step, of a single drone.
 
@@ -100,23 +100,25 @@ class Logger(object):
             (12,)-shaped array of floats containing the drone's control target.
 
         """
-        if drone < 0 or drone >= self.NUM_DRONES or timestamp < 0 or len(state) != 20 or len(control) != 12:
+        if drone < 0 or drone >= self.NUM_DRONES or timestamp < 0 or len(state) != 26 or len(control) != 15:
             print("[ERROR] in Logger.log(), invalid data")
         current_counter = int(self.counters[drone])
         #### Add rows to the matrices if a counter exceeds their size
         if current_counter >= self.timestamps.shape[1]:
             self.timestamps = np.concatenate((self.timestamps, np.zeros((self.NUM_DRONES, 1))), axis=1)
-            self.states = np.concatenate((self.states, np.zeros((self.NUM_DRONES, 16, 1))), axis=2)
-            self.controls = np.concatenate((self.controls, np.zeros((self.NUM_DRONES, 12, 1))), axis=2)
+            self.states = np.concatenate((self.states, np.zeros((self.NUM_DRONES, 19, 1))), axis=2)
+            self.controls = np.concatenate((self.controls, np.zeros((self.NUM_DRONES, 15, 1))), axis=2)
         #### Advance a counter is the matrices have overgrown it ###
         elif not self.PREALLOCATED_ARRAYS and self.timestamps.shape[1] > current_counter:
             current_counter = self.timestamps.shape[1]-1
         #### Log the information and increase the counter ##########
         self.timestamps[drone, current_counter] = timestamp
         #### Re-order the kinematic obs (of most Aviaries) #########
-        self.states[drone, :, current_counter] = np.hstack([state[0:3], state[10:13], state[7:10], state[13:20]])
+        self.states[drone, :, current_counter] = np.hstack([state[0:3], state[10:13], state[7:10], state[13:23]])
         self.controls[drone, :, current_counter] = control
         self.counters[drone] = current_counter + 1
+
+
 
     ################################################################################
 
@@ -377,9 +379,10 @@ class Logger(object):
             plt.savefig(os.path.join('results', 'output_figure.png'))
         else:
             plt.show()
+    
     def export_positions_csv(self, filename: str = "positions.csv"):
         """
-        Export the x, y, z positions of each drone to a single CSV file.
+        Export the x, y, z positions to a single CSV file.
 
         Parameters
         ----------
@@ -392,7 +395,7 @@ class Logger(object):
         with open(file_path, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             # Write header
-            header = ['timestamp', 'drone_id', 'x', 'y', 'z']
+            header = ['timestamp', 'x', 'y', 'z']
             writer.writerow(header)
             
             for drone_id in range(self.NUM_DRONES):
@@ -400,7 +403,6 @@ class Logger(object):
                 for i in range(count):
                     writer.writerow([
                         self.timestamps[drone_id, i],
-                        drone_id,
                         self.states[drone_id, 0, i],  # x
                         self.states[drone_id, 1, i],  # y
                         self.states[drone_id, 2, i]   # z
