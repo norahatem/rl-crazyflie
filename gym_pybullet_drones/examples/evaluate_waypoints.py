@@ -68,7 +68,7 @@ def evaluate(model_path, gui=True, record_video=True, plot=True, output_folder=D
     obs, info = test_env.reset()
     start = time.time()
 
-    
+    #run a long episode and exit when done
     for i in range(int((test_env.EPISODE_LEN_SEC) * test_env.CTRL_FREQ)):
         # Get action from trained model (deterministic policy)
         action, _ = model.predict(obs, deterministic=True)
@@ -103,9 +103,8 @@ def evaluate(model_path, gui=True, record_video=True, plot=True, output_folder=D
 
         # Restart episode if drone is terminated (crashed/out of bounds)
         if terminated or truncated:
-            done = True
             print(f"info: {info}")
-            obs, info = test_env.reset()
+            break
 
     test_env.close()
     logger.export_positions_csv("crazyflie_trajectory.csv")
@@ -122,7 +121,7 @@ if __name__ == '__main__':
                         help="Path to the trained model (.zip)")
 
     # Toggle PyBullet GUI
-    parser.add_argument('--gui', type=str2bool, default=True,
+    parser.add_argument('--gui', type=str2bool, default=False,
                         help="Whether to enable PyBullet GUI (default: True)")
 
     # Toggle video recording
