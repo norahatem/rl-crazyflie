@@ -391,7 +391,7 @@ class Logger(object):
         """
         import csv
 
-        file_path = os.path.join(self.OUTPUT_FOLDER, filename)
+        file_path = os.path.join(os.path.dirname(os.path.dirname(self.OUTPUT_FOLDER)), filename)
         with open(file_path, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             # Write header

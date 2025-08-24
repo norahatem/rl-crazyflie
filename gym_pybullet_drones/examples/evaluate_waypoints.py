@@ -14,16 +14,13 @@ from gym_pybullet_drones.utils.utils import sync, str2bool
 DEFAULT_OBS = ObservationType('kin') # 'kin' or 'rgb'
 DEFAULT_ACT = ActionType('rpm') # 'rpm' or 'pid' or 'vel' or 'one_d_rpm' or 'one_d_pid'
 DEFAULT_OUTPUT_FOLDER = 'results'
-DEFAULT_POINTS_PATH = "../assets/points.xlsx"
+DEFAULT_POINTS_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "trajectory.csv")
 
 ALGORITHM = "SAC"
 
-
-RANDOM = True
-targets = np.array([[0,0,0],[1,1,1],[2,2,2]])
-
-
 def evaluate(model_path, gui=True, record_video=True, plot=True, output_folder=DEFAULT_OUTPUT_FOLDER, read_csv = False, points_path = DEFAULT_POINTS_PATH):
+    RANDOM = True
+    targets = np.array([[0,0,0],[1,1,1],[2,2,2]])
     """
     Evaluate a trained model on the WaypointsAviary environment.
 
@@ -35,12 +32,15 @@ def evaluate(model_path, gui=True, record_video=True, plot=True, output_folder=D
         output_folder (str): Where to save logs and plots.
     """
     
-    if read_csv:
+    if read_csv is True:
         RANDOM = False
         import pandas as pd
-        df = pd.read_excel(points_path, header=None)
+        df = pd.read_csv(points_path)
+        # print(df)
+        # df = pd.read_excel(points_path, header=None)
         targets = df.to_numpy()
-        print(f"Using custom points from a file, targets are: {targets}")
+        print(targets[0])
+        # print(f"Using custom points from a file, targets are: {targets}")
     
     # Load the trained model from file
     if not os.path.isfile(model_path):
@@ -56,7 +56,7 @@ def evaluate(model_path, gui=True, record_video=True, plot=True, output_folder=D
         return  
     
     # Create envs
-    test_env = WayPointsAviary(obs=DEFAULT_OBS, act=DEFAULT_ACT, gui=gui,record=record_video, initial_xyzs= np.array([[1,1,1]]), flight_dome_size=6.0,goal_reach_distance=0.1, num_targets=4, max_duration_seconds=25, random_mode=RANDOM, custom_waypoints=targets)
+    test_env = WayPointsAviary(obs=DEFAULT_OBS, act=DEFAULT_ACT, gui=gui,record=record_video, initial_xyzs= np.array([[0,0,1]]) , flight_dome_size=6.0,goal_reach_distance=0.05, num_targets=4, max_duration_seconds=60, random_mode=RANDOM, custom_waypoints=targets)
 
      # Initialize the flight logger to log drone states for later visualization
     logger = Logger(logging_freq_hz=int(test_env.CTRL_FREQ),
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     parser.add_argument('--output_folder', type=str, default=DEFAULT_OUTPUT_FOLDER,
                         help="Output folder for logs/plots (default: results/)")
     
-    parser.add_argument('--read_csv', type=bool, default=False,
+    parser.add_argument('--read_csv', type=str2bool, default=False,
                         help="Whether to read the points from a csv file")
     
     parser.add_argument('--points_path', type=str, default=DEFAULT_POINTS_PATH,

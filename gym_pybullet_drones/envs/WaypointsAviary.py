@@ -214,7 +214,6 @@ class WayPointsAviary(BaseRLAviary):
         return super()._computeObs()
 
     def _computeReward(self):
-        
         ret = -0.1
         state = self._getDroneStateVector(0)
         if np.linalg.norm(state[0:3]) > self.FLIGHT_DOME_SIZE:
