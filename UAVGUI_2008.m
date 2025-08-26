@@ -340,7 +340,7 @@ if rb1==true
 elseif rb2==true
     cla (ax, 'reset');
 
-    t_end = 15; dt = 1.87; t = (0:dt:t_end)'; % Time Vector
+    t_end = 15; dt =0.46; t = (0:dt:t_end)'; % Time Vector
 
     switch traj
         case "Select"
@@ -378,7 +378,8 @@ elseif rb2==true
         case "Custom Coordinates"
             handles = guidata(src);
             [numRows,numCols] = size(handles.Data);
-            t_end = length(numRows); dt = 0.05; t = (0:dt:t_end)'; % Time Vector
+            t_end = numRows - 1; dt = 1; t = (0:dt:t_end)'; % Time Vector
+            disp(t);
             x_d = handles.Data(:,1);
             y_d = handles.Data(:,2);
             z_d = handles.Data(:,3);
@@ -387,18 +388,24 @@ elseif rb2==true
     % WRITE CSV TO PYTHON
     T = [x_d(:), y_d(:), z_d(:)];
     writematrix(T, 'trajectory.csv');
-    system('conda run -n drones python .\gym_pybullet_drones\examples\evaluate_waypoints.py --model_path .\gym_pybullet_drones\best_model\best_model.zip --read_csv True --gui True');
+    %system('conda run -n drones python .\gym_pybullet_drones\examples\evaluate_waypoints.py --model_path .\gym_pybullet_drones\best_model\best_model.zip --read_csv True --gui True');
 
     
     % SET UP TRAILS
     Tar = [x_d, y_d, z_d];
-        
+    %remove next line
+    %trailTar = animatedline(ax,'Color','m','LineStyle','--','LineWidth',1);
+
     hold (ax, 'on'); grid (ax, 'on'); view(ax, -20,45);
-    xlim(ax, [-0.5 1.0]); ylim(ax, [-1 1.0]); zlim(ax, [-0.5 2.0]);
+    xlim(ax, [-2 2.0]); ylim(ax, [-2 2.0]); zlim(ax, [-0.5 2.0]);
     xlabel(ax, 'X (m)'); ylabel(ax, 'Y (m)'); zlabel(ax, 'Z (m)');
     
     for k = 2:length(t)
-        tar = Tar(k,:)';    
+        disp(k);
+        tar = Tar(k,:)'; 
+        %remove next 2 and uncomment the third
+        %addpoints(trailTar, tar(1), tar(2), tar(3));
+        %drawnow;
         scatter3(ax,tar(1),tar(2),tar(3));
         pause(dt);
     end
@@ -414,7 +421,7 @@ elseif rb2==true
     armLen = 0.1;
     hArm1 = gobjects(1,1);
     hArm2 = gobjects(1,1);
-    disp(RL(end,1));
+    %disp(RL(end,1));
     t_end = RL(end,1); dt = 0.1/3; t = (0:dt:t_end)'; % Time Vector
 
     for k = 2:length(t)
