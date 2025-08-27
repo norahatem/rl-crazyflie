@@ -397,14 +397,19 @@ class Logger(object):
             # Write header
             header = ['timestamp', 'x', 'y', 'z']
             writer.writerow(header)
-            
+            skip = 0
             for drone_id in range(self.NUM_DRONES):
                 count = int(self.counters[drone_id])
                 for i in range(count):
-                    writer.writerow([
-                        self.timestamps[drone_id, i],
-                        self.states[drone_id, 0, i],  # x
-                        self.states[drone_id, 1, i],  # y
-                        self.states[drone_id, 2, i]   # z
-                    ])
+                    if skip == 0:
+                        writer.writerow([
+                            self.timestamps[drone_id, i],
+                            self.states[drone_id, 0, i],  # x
+                            self.states[drone_id, 1, i],  # y
+                            self.states[drone_id, 2, i]   # z
+                        ])
+                    if skip == 2:
+                        skip = 0
+                    else: skip +=1
+
         print(f"[INFO] Exported positions to {file_path}")

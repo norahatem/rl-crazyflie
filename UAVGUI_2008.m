@@ -253,11 +253,12 @@ if rb1==true
                 end
             end
         case "Figure-8"
-            x_d = xin*sin(t); y_d = yin*sin(sll*t).*cos(t); z_d = zeros(size(t));
+            x_d = xin*sin(t); y_d = yin*sin(sll*t).*cos(t); z_d = ones(size(t));
         case "Straight Line"
             seg  = floor(2*(t/t_end)) + 1;
             frac = 2*(t/t_end) - (seg-1);
             x_d = zeros(size(t));  y_d = zeros(size(t)); z_d  = zeros(size(t));
+            %x_d = zeros(size(t) - 1);  y_d = zeros(size(t) - 1); z_d  = zeros(size(t) - 1);
             for k = 1:length(t)
                 s = seg(k); f = frac(k);
                 switch s
@@ -265,6 +266,7 @@ if rb1==true
                     case 2, x_d(k) = cx1 + (cx2-cx1)*(1-f); y_d(k) = cy1 + (cy2-cy1)*(1-f); z_d(k) = cz1 + (cz2-cz1)*(1-f);
                 end
             end
+            x_d(length(t)) = x_d(length(t) -1); y_d(length(t)) = y_d(length(t) -1); z_d(length(t)) = z_d(length(t) -1);
         case "Custom Coordinates"
             handles = guidata(src);
             [numRows,numCols] = size(handles.Data);
@@ -295,10 +297,14 @@ if rb1==true
     % SIMULATE DYNAMICS
     options = odeset('AbsTol',1e-6,'RelTol',1e-6);
     q0      = zeros(22,1);
+    q0(1,1) = x_d(1);
+    q0(2,1) = y_d(1);
+    q0(3,1) = z_d(1);
     [t_sim, q] = ode15s(@UAV, [0 t_end], q0, options);
     
     % Interpolate sim→uniform grid
     XYZ   = interp1(t_sim, q(:,1:3),   t);
+    %XYZ   = interp1(t_sim, q(:,1:3),   t);
     Euler = interp1(t_sim, q(:,4:6),   t);
 
     % SET UP TRAILS
@@ -315,7 +321,7 @@ if rb1==true
     hArm1 = gobjects(1,1);
     hArm2 = gobjects(1,1);
     
-    for k = 2:length(t)
+    for k = 1:length(t)
         pos = XYZ(k,:)'; tar = Tar(k,:)'; ang = Euler(k,:);
         R   = matrixB2I(ang(1), ang(2), ang(3));
     
@@ -340,13 +346,13 @@ if rb1==true
 elseif rb2==true
     cla (ax, 'reset');
 
-    t_end = 15; dt =0.46; t = (0:dt:t_end)'; % Time Vector
+    t_end = 15; dt =0.05; t = (0:dt:t_end)'; % Time Vector
 
     switch traj
         case "Select"
             x_d = NaN; y_d = NaN; z_d = NaN;
         case "Helix"
-            x_d = xin - xin*cos(2*t); y_d = yin*sin(2*t); z_d = zin*t;
+            x_d = xin - xin*cos(2*t); y_d = yin*sin(2*t); z_d = zin*t + 1;
         case "Square"
             side = side_in;      
             z_d  = ones(size(t));
@@ -363,11 +369,19 @@ elseif rb2==true
                 end
             end
         case "Figure-8"
+            %remove t > 2*pi
+            for k = 1:length(t)
+                if t(k) > 2*pi
+                    t = t(1:k);
+                    break;
+                end
+            end
             x_d = xin*sin(t); y_d = yin*sin(sll*t).*cos(t); z_d = ones(size(t));
         case "Straight Line"
             seg  = floor(2*(t/t_end)) + 1;
             frac = 2*(t/t_end) - (seg-1);
             x_d = zeros(size(t));  y_d = zeros(size(t)); z_d  = zeros(size(t));
+            % x_d = zeros(size(t) - 1);  y_d = zeros(size(t) - 1); z_d  = zeros(size(t) - 1);
             for k = 1:length(t)
                 s = seg(k); f = frac(k);
                 switch s
@@ -375,11 +389,14 @@ elseif rb2==true
                     case 2, x_d(k) = cx1 + (cx2-cx1)*(1-f); y_d(k) = cy1 + (cy2-cy1)*(1-f); z_d(k) = cz1 + (cz2-cz1)*(1-f);
                 end
             end
+            x_d(length(t)) = x_d(length(t) -1); y_d(length(t)) = y_d(length(t) -1); z_d(length(t)) = z_d(length(t) -1);
+
+
         case "Custom Coordinates"
             handles = guidata(src);
             [numRows,numCols] = size(handles.Data);
-            t_end = numRows - 1; dt = 1; t = (0:dt:t_end)'; % Time Vector
-            disp(t);
+            t_end = numRows-1; dt = 1; t = (0:dt:t_end)'; % Time Vector
+            %disp(t);
             x_d = handles.Data(:,1);
             y_d = handles.Data(:,2);
             z_d = handles.Data(:,3);
@@ -387,21 +404,25 @@ elseif rb2==true
     
     % WRITE CSV TO PYTHON
     T = [x_d(:), y_d(:), z_d(:)];
+    % disp(T);
     writematrix(T, 'trajectory.csv');
-    %system('conda run -n drones python .\gym_pybullet_drones\examples\evaluate_waypoints.py --model_path .\gym_pybullet_drones\best_model\best_model.zip --read_csv True --gui True');
+    system('conda run -n drones python .\gym_pybullet_drones\examples\evaluate_waypoints.py --model_path .\gym_pybullet_drones\best_model\SAC_checkpoint_9000000_steps.zip --read_csv True --gui False');
 
     
     % SET UP TRAILS
     Tar = [x_d, y_d, z_d];
+    %disp(Tar);
     %remove next line
     %trailTar = animatedline(ax,'Color','m','LineStyle','--','LineWidth',1);
 
     hold (ax, 'on'); grid (ax, 'on'); view(ax, -20,45);
-    xlim(ax, [-2 2.0]); ylim(ax, [-2 2.0]); zlim(ax, [-0.5 2.0]);
+    xlim(ax, [-1 2.0]); ylim(ax, [-1 2.0]); zlim(ax, [-0.5 2.0]);
     xlabel(ax, 'X (m)'); ylabel(ax, 'Y (m)'); zlabel(ax, 'Z (m)');
     
-    for k = 2:length(t)
-        disp(k);
+    
+    % disp(Tar);
+    for k = 1:length(t)
+        % disp(k);
         tar = Tar(k,:)'; 
         %remove next 2 and uncomment the third
         %addpoints(trailTar, tar(1), tar(2), tar(3));
@@ -422,9 +443,11 @@ elseif rb2==true
     hArm1 = gobjects(1,1);
     hArm2 = gobjects(1,1);
     %disp(RL(end,1));
-    t_end = RL(end,1); dt = 0.1/3; t = (0:dt:t_end)'; % Time Vector
+    t_end = RL(end,1); dt = 0.1; t = (0:dt:t_end)'; % Time Vector
 
-    for k = 2:length(t)
+
+    for k = 1:length(t)
+        %disp(k);
         rltar = RLTar(k,:)';
         addpoints(trailSim, rltar(1), rltar(2), rltar(3));
 

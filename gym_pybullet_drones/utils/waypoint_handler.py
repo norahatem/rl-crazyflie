@@ -43,7 +43,7 @@ class WaypointHandler:
         """
         # constants
         # self.enable_render = enable_render
-        self.num_targets = num_targets
+        self.num_targets = num_targets if random_mode else len(waypoints)
         self.use_yaw_targets = use_yaw_targets
         self.goal_reach_distance = goal_reach_distance
         self.goal_reach_angle = goal_reach_angle
