@@ -346,13 +346,13 @@ if rb1==true
 elseif rb2==true
     cla (ax, 'reset');
 
-    t_end = 15; dt =0.05; t = (0:dt:t_end)'; % Time Vector
+    t_end = 15; dt =0.1; t = (0:dt:t_end)'; % Time Vector
 
     switch traj
         case "Select"
             x_d = NaN; y_d = NaN; z_d = NaN;
         case "Helix"
-            x_d = xin - xin*cos(2*t); y_d = yin*sin(2*t); z_d = zin*t + 1;
+            x_d = xin - xin*cos(2*t); y_d = yin*sin(2*t); z_d = zin*t + 0.2;
         case "Square"
             side = side_in;      
             z_d  = ones(size(t));
@@ -419,16 +419,24 @@ elseif rb2==true
     xlim(ax, [-1 2.0]); ylim(ax, [-1 2.0]); zlim(ax, [-0.5 2.0]);
     xlabel(ax, 'X (m)'); ylabel(ax, 'Y (m)'); zlabel(ax, 'Z (m)');
     
-    
+ 
+    % if length(t) > 100
+    %     skip = 3;
+    % else    
+    % skip = 101;
+    % end 
     % disp(Tar);
     for k = 1:length(t)
         % disp(k);
+        % if mod(k,skip) == 0 
+
         tar = Tar(k,:)'; 
         %remove next 2 and uncomment the third
         %addpoints(trailTar, tar(1), tar(2), tar(3));
         %drawnow;
         scatter3(ax,tar(1),tar(2),tar(3));
-        pause(dt);
+        % end
+         pause(dt);
     end
 
     % READ CSV FROM PYTHON

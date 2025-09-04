@@ -35,11 +35,10 @@ def evaluate(model_path, gui=True, record_video=True, plot=True, output_folder=D
     if read_csv is True:
         RANDOM = False
         import pandas as pd
-        df = pd.read_csv(points_path)
+        df = pd.read_csv(points_path, header=None)
         # print(df)
         # df = pd.read_excel(points_path, header=None)
         targets = df.to_numpy()
-        print(targets[0])
         # print(f"Using custom points from a file, targets are: {targets}")
     
     # Load the trained model from file
@@ -56,7 +55,7 @@ def evaluate(model_path, gui=True, record_video=True, plot=True, output_folder=D
         return  
     
     # Create envs
-    test_env = WayPointsAviary(obs=DEFAULT_OBS, act=DEFAULT_ACT, gui=gui,record=record_video, initial_xyzs= np.array([[0,0,1]]) , flight_dome_size=6.0,goal_reach_distance=0.05, num_targets=4, max_duration_seconds=60, random_mode=RANDOM, custom_waypoints=targets)
+    test_env = WayPointsAviary(obs=DEFAULT_OBS, act=DEFAULT_ACT, gui=gui,record=record_video, initial_xyzs= np.array([[0,0,1]]) if RANDOM else np.array([targets[0]]) , flight_dome_size=3.0,goal_reach_distance=0.07, num_targets=5, pyb_freq=240,max_duration_seconds=1000, random_mode=RANDOM, custom_waypoints=targets)
 
      # Initialize the flight logger to log drone states for later visualization
     logger = Logger(logging_freq_hz=int(test_env.CTRL_FREQ),
@@ -103,9 +102,8 @@ def evaluate(model_path, gui=True, record_video=True, plot=True, output_folder=D
 
         # Restart episode if drone is terminated (crashed/out of bounds)
         if terminated or truncated:
-            print(f"info: {info}")
             break
-
+    print(f"info: {info}")
     test_env.close()
     logger.export_positions_csv("crazyflie_trajectory.csv")
 
