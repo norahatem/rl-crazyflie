@@ -5,11 +5,11 @@ We use:
 - **MATLAB** for PID-based control and for the user interface (UI)
 - **Python** (`gym-pybullet-drones`) for RL-based control
 The MATLAB app allows users to visualise and compare PID and RL behaviours on a variety of trajectories.
-You don't need Matlab to run the RL simulation. The Rl part is based of gym-pybullet-drones and the Waypoints problem is implemented after PyFlyt's Waypoints.
+You don't need Matlab to run the RL simulation. The RL part is based of gym-pybullet-drones and the Waypoints problem is implemented after PyFlyt's Waypoints.
 
 ## Requirements
 You need to have conda and Matlab installed to run this demonstartor. 
-RL simulations could be run without Matlab.
+RL simulations could run without Matlab.
 
 ## Installation
 ```sh
